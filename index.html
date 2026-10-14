@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CipherVault Mobile Pro - Bóveda de Credenciales</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col transition-colors duration-300 select-none">
+
+    <!-- Screen 1: Master Password Setup Screen (First Time) -->
+    <div id="setup-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col justify-center items-center p-6 hidden">
+        <div class="w-full max-w-sm space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 rounded-3xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/10">
+                    <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Configurar Bóveda</h2>
+                <p class="text-xs text-slate-400">Crea una Contraseña Maestra para cifrar el acceso local a tus credenciales.</p>
+            </div>
+
+            <form id="setup-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Contraseña Maestra *</label>
+                    <div class="relative">
+                        <input type="password" id="setup-master-pwd" required minlength="6" placeholder="Mínimo 6 caracteres"
+                            class="w-full pl-4 pr-12 py-3.5 bg-slate-900 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                        <button type="button" class="toggle-pwd-btn absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-200" data-target="setup-master-pwd">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Confirmar Contraseña *</label>
+                    <div class="relative">
+                        <input type="password" id="setup-master-confirm" required minlength="6" placeholder="Repite la contraseña"
+                            class="w-full pl-4 pr-12 py-3.5 bg-slate-900 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                        <button type="button" class="toggle-pwd-btn absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-200" data-target="setup-master-confirm">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2 text-amber-300 text-xs">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <span>Si olvidas tu Contraseña Maestra, no se podrá recuperar el acceso a tus datos.</span>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all">
+                    Crear Bóveda Segura
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen 2: Master Password Login Screen (Subsequent Launches) -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-center items-center p-6 hidden">
+        <div class="w-full max-w-sm space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 rounded-3xl bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-2xl shadow-indigo-600/40">
+                    <i data-lucide="lock" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Bóveda Bloqueada</h2>
+                <p class="text-xs text-slate-400">Ingresa tu Contraseña Maestra para desbloquear CipherVault.</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <div class="relative">
+                        <input type="password" id="login-master-pwd" required placeholder="Contraseña Maestra" autofocus
+                            class="w-full pl-4 pr-12 py-4 bg-slate-900 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all text-center tracking-widest placeholder:tracking-normal">
+                        <button type="button" class="toggle-pwd-btn absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-200" data-target="login-master-pwd">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p id="login-error" class="text-xs text-rose-400 mt-2 text-center font-medium hidden">Contraseña Maestra incorrecta.</p>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all">
+                    Desbloquear
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Protected Dashboard Area -->
+    <div id="app-dashboard" class="flex-1 flex flex-col min-h-screen pb-24 md:pb-8">
+        <!-- Top App Bar -->
+        <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 px-4 py-3 sm:px-6">
+            <div class="max-w-4xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base leading-tight flex items-center gap-1.5">
+                            CipherVault <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-semibold">PRO</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400">Protección Activa</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <!-- Lock Vault Button -->
+                    <button id="lock-vault-btn" class="p-2.5 rounded-xl bg-slate-800/80 text-rose-400 hover:bg-rose-500/20 active:scale-95 transition-all" title="Bloquear Bóveda">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </button>
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2.5 rounded-xl bg-slate-800/80 text-slate-300 hover:bg-slate-800 active:scale-95 transition-all" title="Cambiar tema">
+                        <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                        <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+                    </button>
+                    <!-- Quick Generator Button -->
+                    <button id="open-generator-btn" class="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 active:scale-95 transition-all" title="Generador de Contraseñas">
+                        <i data-lucide="wand-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Container -->
+        <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
+            
+            <!-- Search and Quick Stats Bar -->
+            <div class="space-y-3">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" placeholder="Buscar sistema, usuario o notas..." 
+                        class="w-full pl-11 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 placeholder-slate-500 transition-all shadow-inner">
+                </div>
+
+                <!-- Scrollable Category Tabs -->
+                <div id="category-tabs" class="flex gap-2 overflow-x-auto no-scrollbar py-1 text-sm">
+                    <button class="cat-tab px-4 py-2 rounded-xl font-medium shrink-0 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 transition-all" data-category="">
+                        Todas (<span id="count-all">0</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Credentials List (Cards View) -->
+            <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center my-12">
+                <div class="w-16 h-16 rounded-3xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
+                    <i data-lucide="folder-open" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-semibold text-slate-200">Sin credenciales registradas</h3>
+                <p class="text-xs text-slate-400 mt-1 max-w-xs">Toca el botón flotante inferior para agregar tu primera contraseña de forma segura.</p>
+            </div>
+
+        </main>
+
+        <!-- Bottom Floating Action Bar -->
+        <nav aria-label="Navegación móvil" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-6 py-2.5 flex items-center justify-around">
+            <button id="nav-home" class="flex flex-col items-center gap-1 text-indigo-400 transition-colors p-1">
+                <i data-lucide="key-round" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">Bóveda</span>
+            </button>
+            
+            <button id="open-modal-btn" class="relative -top-5 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center shadow-xl shadow-indigo-600/40 transition-all border-4 border-slate-950" title="Nueva Credencial">
+                <i data-lucide="plus" class="w-7 h-7"></i>
+            </button>
+
+            <button id="nav-settings" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors p-1">
+                <i data-lucide="settings" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">Ajustes</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modal: Add / Edit Credential -->
+    <div id="credential-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-[32px] sm:rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden transform translate-y-full sm:translate-y-0 sm:scale-95 opacity-0 transition-all duration-300 max-h-[90vh] flex flex-col" id="modal-content">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 shrink-0">
+                <h3 id="modal-title" class="font-bold text-base text-white">Nueva Credencial</h3>
+                <button id="close-modal-btn" class="p-2 rounded-xl text-slate-400 hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="credential-form" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="cred-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Categoría *</label>
+                    <input type="text" id="cred-category" required list="categories-list" placeholder="Ej. Servidores, Bancos, Redes Sociales" 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                    <datalist id="categories-list">
+                        <option value="Servidores">
+                        <option value="Bancos">
+                        <option value="Redes Sociales">
+                        <option value="Trabajo">
+                        <option value="Personal">
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nombre del Sistema *</label>
+                    <input type="text" id="cred-system" required placeholder="Ej. AWS, GitHub, Gmail" 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nombre de Usuario *</label>
+                    <input type="text" id="cred-username" required placeholder="Ej. admin@empresa.com" 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Contraseña *</label>
+                        <button type="button" id="gen-pwd-modal" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Generar segura
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="cred-password" required placeholder="••••••••••••" 
+                            class="w-full pl-4 pr-12 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                        <button type="button" class="toggle-pwd-btn absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-200" data-target="cred-password">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 space-y-1">
+                        <div class="flex h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div id="strength-bar" class="w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="strength-text" class="text-[11px] text-slate-400 font-medium">Seguridad de la contraseña</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">URL de Acceso (Opcional)</label>
+                    <input type="url" id="cred-url" placeholder="https://app.ejemplo.com/login" 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Descripción o Notas</label>
+                    <textarea id="cred-description" rows="2" placeholder="Notas sobre IP, puertos o recordatorios..." 
+                        class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-100 transition-all resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 pb-6 sm:pb-0 flex items-center gap-3">
+                    <button type="button" id="close-modal-cancel" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-sm font-semibold rounded-2xl transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-sm font-semibold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Password Generator Utility -->
+    <div id="generator-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                        <i data-lucide="wand-2" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-white">Generador</h3>
+                </div>
+                <button id="close-generator-btn" class="p-2 rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between">
+                <span id="gen-output" class="font-mono text-sm tracking-wider break-all text-indigo-300 font-semibold"></span>
+                <div class="flex items-center gap-1 shrink-0 ml-2">
+                    <button id="gen-refresh" class="p-2 text-slate-400 hover:text-indigo-400">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                    <button id="gen-copy" class="p-2 text-slate-400 hover:text-emerald-400">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+                        <span>Longitud</span>
+                        <span id="gen-length-val">16</span>
+                    </div>
+                    <input type="range" id="gen-length" min="8" max="48" value="16" class="w-full accent-indigo-600 cursor-pointer">
+                </div>
+
+                <div class="space-y-2 text-xs font-medium text-slate-300">
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span>Mayúsculas (A-Z)</span>
+                        <input type="checkbox" id="gen-upper" checked class="w-4 h-4 accent-indigo-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span>Minúsculas (a-z)</span>
+                        <input type="checkbox" id="gen-lower" checked class="w-4 h-4 accent-indigo-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span>Números (0-9)</span>
+                        <input type="checkbox" id="gen-numbers" checked class="w-4 h-4 accent-indigo-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between cursor-pointer">
+                        <span>Símbolos (!@#$)</span>
+                        <input type="checkbox" id="gen-symbols" checked class="w-4 h-4 accent-indigo-600 rounded">
+                    </label>
+                </div>
+            </div>
+
+            <button id="gen-use-btn" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white rounded-2xl text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all">
+                Usar en Formulario
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Settings / Master Password Management / Backup -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-bold text-base text-white">Ajustes de Bóveda</h3>
+                </div>
+                <button id="close-settings-btn" class="p-2 rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Auto-lock Setting -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Autobloqueo</label>
+                <select id="auto-lock-select" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-medium text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="0">Inmediatamente al salir</option>
+                    <option value="1">1 Minuto</option>
+                    <option value="5">5 Minutos</option>
+                    <option value="15">15 Minutos</option>
+                    <option value="-1">Nunca</option>
+                </select>
+            </div>
+
+            <!-- Change Master Password Form -->
+            <form id="change-master-form" class="space-y-3 pt-2 border-t border-slate-800">
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Cambiar Contraseña Maestra</h4>
+                <div>
+                    <input type="password" id="change-old-pwd" required placeholder="Contraseña Actual" 
+                        class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <input type="password" id="change-new-pwd" required minlength="6" placeholder="Nueva Contraseña Maestra" 
+                        class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white rounded-xl text-xs font-semibold transition-all">
+                    Actualizar Contraseña Maestra
+                </button>
+            </form>
+
+            <!-- Backup & Restore -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Respaldos</h4>
+                <button id="export-btn" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-2xl text-xs font-medium flex items-center justify-between transition-all">
+                    <span class="flex items-center gap-2"><i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar JSON</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+                </button>
+
+                <label class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 rounded-2xl text-xs font-medium flex items-center justify-between cursor-pointer transition-all">
+                    <span class="flex items-center gap-2"><i data-lucide="upload" class="w-4 h-4 text-indigo-400"></i> Importar JSON</span>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+                    <input type="file" id="import-file" accept=".json" class="hidden">
+                </label>
+            </div>
+
+            <!-- Manual Lock Button inside settings -->
+            <button id="settings-lock-btn" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                <i data-lucide="lock" class="w-4 h-4"></i> Bloquear Ahora
+            </button>
+
+            <div class="pt-2 border-t border-slate-800 text-center">
+                <p class="text-[11px] text-slate-500">CipherVault Pro v3.0 • Criptografía SHA-256 WebCrypto</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border border-slate-800 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
+        <i id="toast-icon" data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+        <span id="toast-msg" class="text-xs font-semibold whitespace-nowrap">Operación exitosa</span>
+    </div>
+
+    <script>
+        // Storage Keys & State
+        const STORAGE_KEY_CREDS = 'ciphervault_mobile_creds';
+        const STORAGE_KEY_AUTH = 'ciphervault_master_auth';
+        const STORAGE_KEY_AUTOLOCK = 'ciphervault_autolock_min';
+        const STORAGE_KEY_LAST_ACTIVE = 'ciphervault_last_active';
+
+        let credentials = [];
+        let activeCategory = '';
+        let revealedPasswords = new Set();
+        let isAuthenticated = false;
+
+        // Web Crypto API Cryptographic Hash Function (SHA-256 with Salt)
+        async function hashPassword(password, saltHex = null) {
+            const encoder = new TextEncoder();
+            let salt;
+            if (saltHex) {
+                salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+            } else {
+                salt = crypto.getRandomValues(new Uint8Array(16));
+            }
+
+            const pwdBuffer = encoder.encode(password);
+            const combined = new Uint8Array(pwdBuffer.length + salt.length);
+            combined.set(pwdBuffer);
+            combined.set(salt, pwdBuffer.length);
+
+            const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            const newSaltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            return { hash: hashHex, salt: newSaltHex };
+        }
+
+        async function verifyMasterPassword(password) {
+            const authData = JSON.parse(localStorage.getItem(STORAGE_KEY_AUTH) || 'null');
+            if (!authData) return false;
+            const computed = await hashPassword(password, authData.salt);
+            return computed.hash === authData.hash;
+        }
+
+        async function setMasterPassword(password) {
+            const hashed = await hashPassword(password);
+            localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(hashed));
+        }
+
+        // Auto-lock Handler
+        function updateLastActive() {
+            if (isAuthenticated) {
+                localStorage.setItem(STORAGE_KEY_LAST_ACTIVE, Date.now().toString());
+            }
+        }
+
+        function checkAutoLock() {
+            if (!isAuthenticated) return;
+            const timeoutMin = parseInt(localStorage.getItem(STORAGE_KEY_AUTOLOCK) || '0');
+            if (timeoutMin === -1) return; // Never
+
+            const lastActive = parseInt(localStorage.getItem(STORAGE_KEY_LAST_ACTIVE) || '0');
+            if (!lastActive) return;
+
+            const elapsedMs = Date.now() - lastActive;
+            const allowedMs = timeoutMin * 60 * 1000;
+
+            if (timeoutMin === 0 || elapsedMs > allowedMs) {
+                lockVault();
+            }
+        }
+
+        function lockVault() {
+            isAuthenticated = false;
+            revealedPasswords.clear();
+            document.getElementById('app-dashboard').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('login-master-pwd').value = '';
+            document.getElementById('login-error').classList.add('hidden');
+            closeAllModals();
+            refreshIcons();
+        }
+
+        function unlockVault() {
+            isAuthenticated = true;
+            updateLastActive();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('app-dashboard').classList.remove('hidden');
+            loadCredentials();
+            renderApp();
+            refreshIcons();
+        }
+
+        function closeAllModals() {
+            document.getElementById('credential-modal').classList.add('hidden');
+            document.getElementById('generator-modal').classList.add('hidden');
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        const setupScreen = document.getElementById('setup-screen');
+        const loginScreen = document.getElementById('login-screen');
+        const setupForm = document.getElementById('setup-form');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+
+        // Master Password Setup Flow
+        setupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('setup-master-pwd').value;
+            const confirmPwd = document.getElementById('setup-master-confirm').value;
+
+            if (pwd !== confirmPwd) {
+                showToast('Las contraseñas no coinciden');
+                return;
+            }
+
+            await setMasterPassword(pwd);
+            showToast('Bóveda configurada exitosamente');
+            unlockVault();
+        });
+
+        // Master Password Login Flow
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('login-master-pwd').value;
+            const isValid = await verifyMasterPassword(pwd);
+
+            if (isValid) {
+                loginError.classList.add('hidden');
+                unlockVault();
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        // Change Master Password Flow
+        document.getElementById('change-master-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const oldPwd = document.getElementById('change-old-pwd').value;
+            const newPwd = document.getElementById('change-new-pwd').value;
+
+            const isValid = await verifyMasterPassword(oldPwd);
+            if (!isValid) {
+                showToast('Contraseña actual incorrecta');
+                return;
+            }
+
+            await setMasterPassword(newPwd);
+            document.getElementById('change-master-form').reset();
+            showToast('Contraseña Maestra actualizada');
+        });
+
+        // Toggle password visibility helper
+        document.querySelectorAll('.toggle-pwd-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if (input) {
+                    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                    input.setAttribute('type', type);
+                    btn.innerHTML = type === 'password' ? '<i data-lucide="eye" class="w-4 h-4"></i>' : '<i data-lucide="eye-off" class="w-4 h-4"></i>';
+                    refreshIcons();
+                }
+            });
+        });
+
+        // Auto Lock Setup listener
+        const autoLockSelect = document.getElementById('auto-lock-select');
+        autoLockSelect.value = localStorage.getItem(STORAGE_KEY_AUTOLOCK) || '0';
+        autoLockSelect.addEventListener('change', (e) => {
+            localStorage.setItem(STORAGE_KEY_AUTOLOCK, e.target.value);
+            showToast('Ajuste de autobloqueo guardado');
+        });
+
+        document.getElementById('lock-vault-btn').addEventListener('click', lockVault);
+        document.getElementById('settings-lock-btn').addEventListener('click', lockVault);
+
+        // Load Credentials from LocalStorage
+        function loadCredentials() {
+            credentials = JSON.parse(localStorage.getItem(STORAGE_KEY_CREDS) || '[]');
+        }
+
+        function saveCredentials() {
+            localStorage.setItem(STORAGE_KEY_CREDS, JSON.stringify(credentials));
+        }
+
+        // DOM elements
+        const searchInput = document.getElementById('search-input');
+        const cardsContainer = document.getElementById('cards-container');
+        const emptyState = document.getElementById('empty-state');
+        const categoryTabs = document.getElementById('category-tabs');
+        const countAll = document.getElementById('count-all');
+        
+        const openModalBtn = document.getElementById('open-modal-btn');
+        const credentialModal = document.getElementById('credential-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const closeModalCancel = document.getElementById('close-modal-cancel');
+        const credentialForm = document.getElementById('credential-form');
+        const modalTitle = document.getElementById('modal-title');
+
+        const generatorModal = document.getElementById('generator-modal');
+        const openGeneratorBtn = document.getElementById('open-generator-btn');
+        const closeGeneratorBtn = document.getElementById('close-generator-btn');
+        const genPwdModal = document.getElementById('gen-pwd-modal');
+        const genOutput = document.getElementById('gen-output');
+        const genRefresh = document.getElementById('gen-refresh');
+        const genCopy = document.getElementById('gen-copy');
+        const genLength = document.getElementById('gen-length');
+        const genLengthVal = document.getElementById('gen-length-val');
+        const genUpper = document.getElementById('gen-upper');
+        const genLower = document.getElementById('gen-lower');
+        const genNumbers = document.getElementById('gen-numbers');
+        const genSymbols = document.getElementById('gen-symbols');
+        const genUseBtn = document.getElementById('gen-use-btn');
+
+        const settingsModal = document.getElementById('settings-modal');
+        const navSettings = document.getElementById('nav-settings');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const navHome = document.getElementById('nav-home');
+
+        const credPassword = document.getElementById('cred-password');
+        const strengthBar = document.getElementById('strength-bar');
+        const strengthText = document.getElementById('strength-text');
+
+        const exportBtn = document.getElementById('export-btn');
+        const importFile = document.getElementById('import-file');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+
+        function refreshIcons() {
+            lucide.createIcons();
+        }
+
+        function showToast(message) {
+            toastMsg.textContent = message;
+            toast.classList.remove('translate-y-16', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-16', 'opacity-0');
+            }, 2500);
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Copiado al portapapeles');
+                }).catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Copiado al portapapeles');
+            } catch (err) {
+                showToast('Error al copiar');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+        });
+
+        function evaluateStrength(pwd) {
+            let score = 0;
+            if (!pwd) return { score: 0, label: 'Vacía', color: 'bg-slate-700', width: '0%' };
+            if (pwd.length >= 8) score++;
+            if (pwd.length >= 12) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+            if (score <= 2) return { label: 'Débil', color: 'bg-rose-500', width: '33%' };
+            if (score <= 4) return { label: 'Media', color: 'bg-amber-500', width: '66%' };
+            return { label: 'Fuerte', color: 'bg-emerald-500', width: '100%' };
+        }
+
+        credPassword.addEventListener('input', (e) => {
+            const evalRes = evaluateStrength(e.target.value);
+            strengthBar.className = `h-full transition-all duration-300 ${evalRes.color}`;
+            strengthBar.style.width = evalRes.width;
+            strengthText.textContent = `Seguridad: ${evalRes.label}`;
+        });
+
+        function generatePassword() {
+            const len = parseInt(genLength.value);
+            let chars = '';
+            if (genUpper.checked) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            if (genLower.checked) chars += 'abcdefghijklmnopqrstuvwxyz';
+            if (genNumbers.checked) chars += '0123456789';
+            if (genSymbols.checked) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+            if (!chars) {
+                genOutput.textContent = 'Selecciona una opción';
+                return;
+            }
+            let res = '';
+            for (let i = 0; i < len; i++) {
+                res += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            genOutput.textContent = res;
+        }
+
+        genLength.addEventListener('input', (e) => {
+            genLengthVal.textContent = e.target.value;
+            generatePassword();
+        });
+        [genUpper, genLower, genNumbers, genSymbols].forEach(el => el.addEventListener('change', generatePassword));
+        genRefresh.addEventListener('click', generatePassword);
+        genCopy.addEventListener('click', () => copyToClipboard(genOutput.textContent));
+
+        openGeneratorBtn.addEventListener('click', () => {
+            generatePassword();
+            generatorModal.classList.remove('hidden');
+            generatorModal.classList.add('flex');
+            refreshIcons();
+        });
+        closeGeneratorBtn.addEventListener('click', () => generatorModal.classList.add('hidden'));
+        genPwdModal.addEventListener('click', () => {
+            generatePassword();
+            generatorModal.classList.remove('hidden');
+            generatorModal.classList.add('flex');
+            refreshIcons();
+        });
+        genUseBtn.addEventListener('click', () => {
+            credPassword.value = genOutput.textContent;
+            credPassword.dispatchEvent(new Event('input'));
+            generatorModal.classList.add('hidden');
+            showToast('Contraseña aplicada');
+        });
+
+        navSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+            refreshIcons();
+        });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        navHome.addEventListener('click', () => {
+            searchInput.value = '';
+            activeCategory = '';
+            renderApp();
+        });
+
+        function openModal(id = null) {
+            credentialForm.reset();
+            strengthBar.style.width = '0%';
+            strengthText.textContent = 'Seguridad de la contraseña';
+
+            if (id) {
+                modalTitle.textContent = 'Editar Credencial';
+                const c = credentials.find(item => item.id === id);
+                if (c) {
+                    document.getElementById('cred-id').value = c.id;
+                    document.getElementById('cred-category').value = c.category;
+                    document.getElementById('cred-system').value = c.system;
+                    document.getElementById('cred-username').value = c.username;
+                    document.getElementById('cred-password').value = c.password;
+                    document.getElementById('cred-url').value = c.url || '';
+                    document.getElementById('cred-description').value = c.description || '';
+                    credPassword.dispatchEvent(new Event('input'));
+                }
+            } else {
+                modalTitle.textContent = 'Nueva Credencial';
+                document.getElementById('cred-id').value = '';
+            }
+
+            credentialModal.classList.remove('hidden');
+            credentialModal.classList.add('flex');
+            setTimeout(() => {
+                modalContent.classList.remove('translate-y-full', 'scale-95', 'opacity-0');
+            }, 10);
+            refreshIcons();
+        }
+
+        function closeModal() {
+            modalContent.classList.add('translate-y-full', 'scale-95', 'opacity-0');
+            setTimeout(() => {
+                credentialModal.classList.remove('flex');
+                credentialModal.classList.add('hidden');
+            }, 200);
+        }
+
+        openModalBtn.addEventListener('click', () => openModal());
+        closeModalBtn.addEventListener('click', closeModal);
+        closeModalCancel.addEventListener('click', closeModal);
+
+        // Save Credential
+        credentialForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('cred-id').value;
+            const category = document.getElementById('cred-category').value.trim();
+            const system = document.getElementById('cred-system').value.trim();
+            const username = document.getElementById('cred-username').value.trim();
+            const password = document.getElementById('cred-password').value;
+            const url = document.getElementById('cred-url').value.trim();
+            const description = document.getElementById('cred-description').value.trim();
+            const strengthEval = evaluateStrength(password);
+
+            if (id) {
+                credentials = credentials.map(c => c.id === id ? {
+                    ...c, category, system, username, password, url, description,
+                    strength: strengthEval.label, updatedAt: new Date().toISOString()
+                } : c);
+                showToast('Credencial actualizada');
+            } else {
+                const newCred = {
+                    id: 'cred_' + Date.now() + Math.random().toString(36).substring(2, 7),
+                    category, system, username, password, url, description,
+                    strength: strengthEval.label,
+                    createdAt: new Date().toISOString()
+                };
+                credentials.push(newCred);
+                showToast('Credencial guardada');
+            }
+
+            saveCredentials();
+            renderApp();
+            closeModal();
+        });
+
+        function deleteCredential(id) {
+            if (confirm('¿Eliminar esta credencial permanentemente?')) {
+                credentials = credentials.filter(c => c.id !== id);
+                revealedPasswords.delete(id);
+                saveCredentials();
+                renderApp();
+                showToast('Credencial eliminada');
+            }
+        }
+
+        function toggleReveal(id) {
+            if (revealedPasswords.has(id)) revealedPasswords.delete(id);
+            else revealedPasswords.add(id);
+            renderApp();
+        }
+
+        function renderApp() {
+            if (!isAuthenticated) return;
+
+            const searchTerm = searchInput.value.toLowerCase();
+            const categories = [...new Set(credentials.map(c => c.category))].sort();
+            countAll.textContent = credentials.length;
+
+            categoryTabs.innerHTML = `
+                <button class="cat-tab px-4 py-2 rounded-xl font-medium shrink-0 transition-all ${activeCategory === '' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}" data-category="">
+                    Todas (${credentials.length})
+                </button>
+            `;
+            categories.forEach(cat => {
+                const count = credentials.filter(c => c.category === cat).length;
+                const isActive = activeCategory === cat;
+                const btn = document.createElement('button');
+                btn.className = `cat-tab px-4 py-2 rounded-xl font-medium shrink-0 transition-all ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`;
+                btn.textContent = `${cat} (${count})`;
+                btn.onclick = () => {
+                    activeCategory = cat;
+                    renderApp();
+                };
+                categoryTabs.appendChild(btn);
+            });
+
+            const filtered = credentials.filter(c => {
+                const matchSearch = c.system.toLowerCase().includes(searchTerm) ||
+                                    c.username.toLowerCase().includes(searchTerm) ||
+                                    c.description.toLowerCase().includes(searchTerm);
+                const matchCat = activeCategory === '' || c.category === activeCategory;
+                return matchSearch && matchCat;
+            });
+
+            cardsContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filtered.forEach(c => {
+                    const isRevealed = revealedPasswords.has(c.id);
+                    const displayPwd = isRevealed ? c.password : '••••••••••••';
+
+                    let badgeColor = 'bg-slate-800 text-slate-300';
+                    if (c.strength === 'Débil') badgeColor = 'bg-rose-500/10 text-rose-400';
+                    if (c.strength === 'Media') badgeColor = 'bg-amber-500/10 text-amber-400';
+                    if (c.strength === 'Fuerte') badgeColor = 'bg-emerald-500/10 text-emerald-400';
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between gap-3 active:scale-[0.99] transition-all';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-500/10 text-indigo-400">
+                                ${escapeHtml(c.category)}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${badgeColor}">
+                                ${c.strength || 'Normal'}
+                            </span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-base text-white">${escapeHtml(c.system)}</h4>
+                            <p class="font-mono text-xs text-slate-400 mt-0.5">${escapeHtml(c.username)}</p>
+                        </div>
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between font-mono text-xs">
+                            <span class="truncate pr-2 text-slate-300 select-all">${displayPwd}</span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="toggleReveal('${c.id}')" class="p-1.5 text-slate-400 hover:text-slate-200">
+                                    <i data-lucide="${isRevealed ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="copyToClipboard('${escapeJs(c.password)}')" class="p-1.5 text-slate-400 hover:text-emerald-400">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        ${c.description ? `<p class="text-xs text-slate-400 line-clamp-2">${escapeHtml(c.description)}</p>` : ''}
+                        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                            ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:underline"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Abrir enlace</a>` : '<span></span>'}
+                            <div class="flex items-center gap-1">
+                                <button onclick="openModal('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-indigo-400 transition-colors">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteCredential('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-rose-400 transition-colors">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    cardsContainer.appendChild(card);
+                });
+            }
+            refreshIcons();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+        function escapeJs(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        searchInput.addEventListener('input', renderApp);
+
+        // Export JSON Backup
+        exportBtn.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(credentials, null, 2));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `ciphervault_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+            showToast('Respaldo exportado con éxito');
+        });
+
+        // Import JSON Backup
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported)) {
+                        if (confirm(`Se encontraron ${imported.length} registros. ¿Deseas fusionarlos con tu bóveda actual?`)) {
+                            let added = 0;
+                            imported.forEach(item => {
+                                if (item.system && item.username && item.password) {
+                                    item.id = 'cred_' + Date.now() + Math.random().toString(36).substring(2, 7);
+                                    credentials.push(item);
+                                    added++;
+                                }
+                            });
+                            saveCredentials();
+                            renderApp();
+                            showToast(`Se importaron ${added} credenciales`);
+                        }
+                    } else {
+                        showToast('Archivo JSON inválido');
+                    }
+                } catch (err) {
+                    showToast('Error al leer el archivo JSON');
+                }
+                importFile.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        // User Activity Listeners for Auto-Lock
+        ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, updateLastActive, { passive: true });
+        });
+
+        // App Initialization & Initial Authentication Check
+        window.onload = function() {
+            const hasAuth = localStorage.getItem(STORAGE_KEY_AUTH);
+            document.getElementById('app-dashboard').classList.add('hidden');
+
+            if (!hasAuth) {
+                // First launch: show setup screen
+                setupScreen.classList.remove('hidden');
+            } else {
+                // Subsequent launch: check auto-lock or prompt for Master Password
+                loginScreen.classList.remove('hidden');
+                checkAutoLock();
+            }
+            refreshIcons();
+        };
+    </script>
+</body>
+</html>
